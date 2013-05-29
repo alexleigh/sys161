@@ -68,6 +68,8 @@ struct output {
 
 static struct output *o_stdout;
 static struct output *o_stderr;
+static FILE *f_second_console;
+static struct output *o_second_console = 0;
 
 #ifdef USE_TRACE
 static struct output *o_tracefile;
@@ -82,12 +84,16 @@ static int console_up=0;
 static void (*onkey)(void *data, int ch);
 static void *onkeydata;
 
+static void (*second_onkey)(void *data, int ch);
+static void *second_onkeydata;
+
 ////////////////////////////////////////////////////////////
 //
 // Forward decls
 //
 
 static int console_sel(void *unused);
+static int second_console_sel(void *unused);
 
 ////////////////////////////////////////////////////////////
 //
@@ -405,8 +411,20 @@ tty_cleanup(void)
 /*****************************************/
 
 void
-console_init(int pass_signals)
+console_init(int pass_signals, int use_second_console, const char *second_console)
 {
+	if (use_second_console) {
+		f_second_console = fopen(second_console, "rw");
+		struct stat s;
+
+		if (fstat(fileno(f_second_console), &s)) {
+			fprintf(stderr, "fstat second console: %s\n", strerror(errno));
+			exit(1);
+		}
+
+		o_second_console = make_fd_output(f_second_console);
+	}
+
 	if (console_up) {
 		smoke("Multiple calls to console_init");
 	}
@@ -447,6 +465,9 @@ console_init(int pass_signals)
 
 	tty_init(!pass_signals);
 	onselect(STDIN_FILENO, NULL, console_sel, NULL);
+	if (use_second_console) {
+		onselect(fileno(f_second_console), NULL, second_console_sel, NULL);
+	}
 	console_up = 1;
 }
 
@@ -511,6 +532,14 @@ console_putc(int c)
 	}
 	fflush(o_stdout->f);
 #endif
+}
+
+void
+second_console_putc(int c)
+{
+	if (o_second_console) {
+		output_putc(o_second_console, c);
+	}
 }
 
 void
@@ -705,6 +734,24 @@ console_getc(void)
 
 static
 int
+second_console_getc(void)
+{
+	char ch;
+	int r;
+
+	r = read(fileno(f_second_console), &ch, 1);
+	if (r<0) {
+		smoke("Read error on second console: %s", strerror(errno));
+	}
+	else if (r==0) {
+		/* EOF - send back -1 and hope nothing breaks */
+		return -1;
+	}
+	return (int)(unsigned)(unsigned char)ch;
+}
+
+static
+int
 console_sel(void *unused)
 {
 	int ch;
@@ -722,6 +769,25 @@ console_sel(void *unused)
 	return 0;
 }
 
+static
+int
+second_console_sel(void *unused)
+{
+	int ch;
+	(void)unused;
+
+	ch = second_console_getc();
+	if (ch=='\a') {
+		/* ^G (BEL) - interrupt */
+		main_stop();
+	}
+	else if (second_onkey) {
+		second_onkey(second_onkeydata, ch);
+	}
+
+	return 0;
+}
+
 void
 console_onkey(void *data, void (*func)(void *, int))
 {
@@ -729,4 +795,9 @@ console_onkey(void *data, void (*func)(void *, int))
 	onkey = func;
 }
 
-
+void
+second_console_onkey(void *data, void (*func)(void *, int))
+{
+	second_onkeydata = data;
+	second_onkey = func;
+}

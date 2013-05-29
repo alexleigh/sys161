@@ -188,7 +188,11 @@ serial_store(unsigned cpunum, void *d, u_int32_t offset, u_int32_t val)
 		    if (!sd->sd_wbusy) {
 			    sd->sd_wbusy = 1;
 			    g_stats.s_wchars++;
-			    console_putc(val);
+			    if (sd->sd_slot == 0) {
+			    	console_putc(val);
+			    } else {
+			    	second_console_putc(val);
+			    }
 			    schedule_event(SERIAL_NSECS, sd, 0, 
 					   serial_writedone, "serial write");
 		    }
@@ -227,7 +231,11 @@ serial_init(int slot, int argc, char *argv[])
 	(void)argc;
 	(void)argv;
 
-	console_onkey(sd, serial_input);
+	if (slot == 0) {
+		console_onkey(sd, serial_input);
+	} else {
+		second_console_onkey(sd, serial_input);
+	}
 
 	return sd;
 }

@@ -11,12 +11,14 @@
 #endif
 
 void console_earlyinit(void);
-void console_init(int pass_sigs);
+void console_init(int pass_sigs, int use_second_console, const char *second_console);
 void console_cleanup(void);
 
 void console_beep(void);
 void console_putc(int ch);
+void second_console_putc(int ch);
 void console_onkey(void *, void (*func)(void *, int));
+void second_console_onkey(void *, void (*func)(void *, int));
 
 void die(void) DEAD;
 void msg(const char *fmt, ...) PF(1,2);    /* general messages */

@@ -322,6 +322,8 @@ main(int argc, char *argv[])
 #ifdef USE_TRACE
 	int profiling=0;
 #endif
+	int use_second_console=0;
+	const char *second_console = NULL;
 	unsigned ncpus;
 
 	/* This must come absolutely first so msg() can be used. */
@@ -335,7 +337,7 @@ main(int argc, char *argv[])
 		die();
 	}
 
-	while ((opt = mygetopt(argc, argv, "c:f:p:Pst:w"))!=-1) {
+	while ((opt = mygetopt(argc, argv, "c:f:p:Pst:wk:"))!=-1) {
 		switch (opt) {
 		    case 'c': config = myoptarg; break;
 		    case 'f':
@@ -356,7 +358,11 @@ main(int argc, char *argv[])
 #endif
 			break;
 		    case 'w': debugwait = 1; break;
-		    default: usage();
+		    case 'k':
+		    use_second_console = 1;
+		    second_console = myoptarg;
+		    break;
+		    default: usage(); break;
 		}
 	}
 	if (myoptind==argc) {
@@ -381,7 +387,7 @@ main(int argc, char *argv[])
 	/* This must come before bus_config in case a network card needs it */
 	mkdir(".sockets", 0700);
 	
-	console_init(pass_signals);
+	console_init(pass_signals, use_second_console, second_console);
 	clock_init();
 	ncpus = bus_config(config);
 
