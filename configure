@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # We need the following stuff:
 #
@@ -532,6 +532,12 @@ if [ $OK = 0 ]; then
     rm -f __conf*
     exit 1
 fi
+
+############################################################
+
+echo -n "Cleaning up... "
+rm -f a.out
+echo "ok"
 
 ############################################################
 
