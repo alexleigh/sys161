@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/bin/sh
+
 #
 # We need the following stuff:
 #
@@ -11,6 +12,9 @@
 #     7. sized integer types
 #
 
+# alias echo because the strict POSIX sh's builtin echo does not support -n
+alias echo='/bin/echo'
+
 if [ -f doc/lamebus.html ]; then
     SRCDIR=""
 else
@@ -19,7 +23,7 @@ fi
 
 while [ "x$1" != x ]; do
     case "$1" in
-	--help) cat <<EOF
+        --help) cat <<EOF
 Usage: ./configure [options] cpu_architecture
 Options are:
     --help              Print this message
@@ -33,25 +37,25 @@ Options are:
     --debug             Turn on debug symbols for sys161 itself [default off]
 Architectures are:
 EOF
-	cat ${SRCDIR}*/cpuinfo.txt
-    exit 0
-    ;;
-	--with-compiler=*) CC=`echo $1 | sed 's/^[^=]*=//'`;;
-	--prefix=*) PREFIX=`echo $1 | sed 's/^[^=]*=//'`;;
-	--bindir=*) BINDIR=`echo $1 | sed 's/^[^=]*=//'`;;
-	--exampledir=*) EXAMPLEDIR=`echo $1 | sed 's/^[^=]*=//'`;;
-	--docdir=*) DOCDIR=`echo $1 | sed 's/^[^=]*=//'`;;
-	--mandir=*) MANDIR=`echo $1 | sed 's/^[^=]*=//'`;;
-	--devel) USEWARNS=1;;
-	--debug) USEDEBUG=1;;
-	--*) echo "Unknown option $1 (try --help)"; exit 1;;
-	*) 
-	    if [ "x$CPU" != x ]; then
-		echo "Cannot configure more than one architecture"
-		exit 1
-	    fi
-	    CPU="$1";
-	    ;;
+            cat ${SRCDIR}*/cpuinfo.txt
+            exit 0
+            ;;
+        --with-compiler=*) CC=`echo $1 | sed 's/^[^=]*=//'`;;
+        --prefix=*) PREFIX=`echo $1 | sed 's/^[^=]*=//'`;;
+        --bindir=*) BINDIR=`echo $1 | sed 's/^[^=]*=//'`;;
+        --exampledir=*) EXAMPLEDIR=`echo $1 | sed 's/^[^=]*=//'`;;
+        --docdir=*) DOCDIR=`echo $1 | sed 's/^[^=]*=//'`;;
+        --mandir=*) MANDIR=`echo $1 | sed 's/^[^=]*=//'`;;
+        --devel) USEWARNS=1;;
+        --debug) USEDEBUG=1;;
+        --*) echo "Unknown option $1 (try --help)"; exit 1;;
+        *) 
+            if [ "x$CPU" != x ]; then
+                echo "Cannot configure more than one architecture"
+                exit 1
+            fi
+            CPU="$1";
+            ;;
     esac
 shift
 done
@@ -64,11 +68,11 @@ if [ "x$SRCDIR" = "x" ]; then
     echo 'here'
 else
     if [ -f ${SRCDIR}doc/lamebus.html ]; then
-	echo $SRCDIR
+        echo $SRCDIR
     else
-	echo 'missing'
-	echo "Cannot find source - please run $0 out of source tree"
-	exit 1
+        echo 'missing'
+        echo "Cannot find source - please run $0 out of source tree"
+        exit 1
     fi
 fi
 
@@ -115,10 +119,10 @@ fi
 
 for TRYCC in "$CC" $COMPILERS; do
     if ($TRYCC __conftest.c -o __conftest) >/dev/null 2>&1; then
-	if (./__conftest) >/dev/null 2>&1; then
-	    GOTCC="$TRYCC"
-	    break;
-	fi
+        if (./__conftest) >/dev/null 2>&1; then
+            GOTCC="$TRYCC"
+            break;
+        fi
     fi
 done
 
@@ -150,7 +154,6 @@ if $CC -v 2>&1 | egrep 'gcc version' >/dev/null 2>&1; then
 else
     echo 'no'
 fi
-
 
 ############################################################
 
@@ -205,10 +208,10 @@ int main() {
     unsigned long x = 1;
     unsigned char *c = (unsigned char *)&x;
     if (c[sizeof(x)-1]==1) {
-       printf("big\n");
+        printf("big\n");
     }
     else if (c[0]==1) {
-       printf("little\n");
+        printf("little\n");
     }
     else return 1;
     return 0;
@@ -220,21 +223,22 @@ $CC __conftest.c -o __conftest
 ENDIAN=`./__conftest || echo unknown`
 
 case $ENDIAN in
-     little)
-	echo 'little-endian'
-	echo '#define QUAD_HIGHWORD 1' >> __config.h
-	echo '#define QUAD_LOWWORD  0' >> __config.h
-	;;
-     big)
-	echo 'big-endian'
-	echo '#define QUAD_HIGHWORD 0' >> __config.h
-	echo '#define QUAD_LOWWORD  1' >> __config.h
-	;;
-     *) echo 'unknown'; 
+    little)
+        echo 'little-endian'
+        echo '#define QUAD_HIGHWORD 1' >> __config.h
+        echo '#define QUAD_LOWWORD  0' >> __config.h
+        ;;
+    big)
+        echo 'big-endian'
+        echo '#define QUAD_HIGHWORD 0' >> __config.h
+        echo '#define QUAD_LOWWORD  1' >> __config.h
+        ;;
+    *)
+        echo 'unknown'; 
         echo 'Help!'; 
-	rm -f __conf*
+        rm -f __conf*
         exit 1
-	;;
+        ;;
 esac
 
 ############################################################
@@ -248,8 +252,8 @@ int main() {
     int i;
     for (i=0; i<128; i++) {
         if ((unsigned char)(x << i) == 0) {
-	   printf("%d\n", i);
-	   return 0;
+            printf("%d\n", i);
+            return 0;
         }
     }
     return 1;
@@ -299,44 +303,43 @@ $CC __conftest2.c -o __conftest2
 
 for size in 8 16 32 64; do
     for sign in u_int int; do
-	echo '#include <sys/types.h>' > __conftest.c
-	echo "${sign}${size}_t x;" >> __conftest.c
+        echo '#include <sys/types.h>' > __conftest.c
+        echo "${sign}${size}_t x;" >> __conftest.c
 
-	if $CC -c __conftest.c >/dev/null 2>&1; then
-	    break;
-	fi
+        if $CC -c __conftest.c >/dev/null 2>&1; then
+            break;
+        fi
 
-	if [ $sign = u_int ]; then
-	    echo '#include <sys/types.h>' > __conftest.c
-	    echo "uint${size}_t x;" >> __conftest.c
+        if [ $sign = u_int ]; then
+            echo '#include <sys/types.h>' > __conftest.c
+            echo "uint${size}_t x;" >> __conftest.c
 
-	    if $CC -c __conftest.c >/dev/null 2>&1; then
-		echo '#include <sys/types.h>' >> __config.h;
-		echo "typedef uint${size}_t u_int${size}_t;" >> __config.h;
-		break;
-	    fi
-	fi
+            if $CC -c __conftest.c >/dev/null 2>&1; then
+                echo '#include <sys/types.h>' >> __config.h;
+                echo "typedef uint${size}_t u_int${size}_t;" >> __config.h;
+                break;
+            fi
+        fi
 
-	RESULT=`./__conftest2 $size $CHARBIT 2>/dev/null || echo unknown`
+        RESULT=`./__conftest2 $size $CHARBIT 2>/dev/null || echo unknown`
 
-	if [ "x$RESULT" = xunknown ]; then
-	    echo 'oops'
-	    echo "Cannot determine type for ${sign}${size}_t"
-	    echo 'Help!'
-	    rm -f __conf*
-	    exit 1;
-	fi
+        if [ "x$RESULT" = xunknown ]; then
+            echo 'oops'
+            echo "Cannot determine type for ${sign}${size}_t"
+            echo 'Help!'
+            rm -f __conf*
+            exit 1;
+        fi
 
-	if [ $size = 8 -a $sign = int -a "x$RESULT" = xchar ]; then
-	    RESULT="signed char"
-	fi
+        if [ $size = 8 -a $sign = int -a "x$RESULT" = xchar ]; then
+            RESULT="signed char"
+        fi
 
-	if [ $sign = "u_int" ]; then
-	    RESULT="unsigned $RESULT"
-	fi
+        if [ $sign = "u_int" ]; then
+            RESULT="unsigned $RESULT"
+        fi
 
-	echo "typedef $RESULT ${sign}${size}_t;" >> __config.h;
-
+        echo "typedef $RESULT ${sign}${size}_t;" >> __config.h;
     done
 done
 
@@ -369,8 +372,8 @@ cat >__conftest.c <<EOF
 #include <sys/types.h>
 #include <sys/socket.h>
 int foo() {
-  socklen_t testing;
-  return accept(0, (struct sockaddr *)0, &testing);
+    socklen_t testing;
+    return accept(0, (struct sockaddr *)0, &testing);
 }
 EOF
 
@@ -379,18 +382,18 @@ if $CC -c __conftest.c >/dev/null 2>&1; then
 else
     OK=0
     for TRY in int size_t long unsigned "unsigned long"; do
-	if $CC -D"socklen_t=$TRY" -c __conftest.c >/dev/null 2>&1; then
-	    echo "$TRY"
-	    echo "typedef $TRY socklen_t;" >> __config.h
-	    OK=1;
-	    break;
-	fi
+        if $CC -D"socklen_t=$TRY" -c __conftest.c >/dev/null 2>&1; then
+            echo "$TRY"
+            echo "typedef $TRY socklen_t;" >> __config.h
+            OK=1;
+            break;
+        fi
     done
     if [ $OK != 1 ]; then
-	echo 'missing'
-	echo 'Cannot determine type for socklen_t... help!'
-	rm -f __conf*
-	exit 1
+        echo 'missing'
+        echo 'Cannot determine type for socklen_t... help!'
+        rm -f __conf*
+        exit 1
     fi
 fi
 
@@ -482,7 +485,7 @@ int main() {
 }
 EOF
 
-if $CC __conftest.c $LIBS >/dev/null 2>&1; then
+if $CC __conftest.c $LIBS -o __conftest >/dev/null 2>&1; then
     echo "yes"
 else
     echo "missing"
@@ -508,21 +511,21 @@ EOF
 OK=0
 if $CC __conftest.c -o __conftest >/dev/null 2>&1; then
     if ./__conftest >/dev/null 2>&1; then
-	echo 'ok'
-	OK=1
+        echo 'ok'
+        OK=1
     fi
 fi
 
 if [ $OK = 0 ]; then
     for TRY in -lsnprintf -ldb; do
-	if $CC __conftest.c $TRY -o __conftest >/dev/null 2>&1; then
-	    if ./__conftest; then
-		echo $TRY
-		LIBS=`echo "$LIBS $TRY" | sed 's/^ *//;s/ *$//'`
-		OK=1
-		break
-	    fi
-	fi
+        if $CC __conftest.c $TRY -o __conftest >/dev/null 2>&1; then
+            if ./__conftest; then
+                echo $TRY
+                LIBS=`echo "$LIBS $TRY" | sed 's/^ *//;s/ *$//'`
+                OK=1
+                break
+            fi
+        fi
      done
 fi
 
@@ -532,12 +535,6 @@ if [ $OK = 0 ]; then
     rm -f __conf*
     exit 1
 fi
-
-############################################################
-
-echo -n "Cleaning up... "
-rm -f a.out
-echo "ok"
 
 ############################################################
 
@@ -561,9 +558,9 @@ fi
 
 if [ "x$MANDIR" = x ]; then
     if [ -d "$PREFIX/share/man/man1" ]; then
-	MANDIR="$PREFIX/share/man"
+        MANDIR="$PREFIX/share/man"
     else
-	MANDIR="$PREFIX/man"
+        MANDIR="$PREFIX/man"
     fi
 fi
 
@@ -588,9 +585,9 @@ echo 'Generating defs.mk'
 (
     echo '# Automatically generated file; do not edit'
     case "$SRCDIR" in
-	"") echo "S=.";;
-	/*) echo "S=$SRCDIR" | sed 's,/$,,';;
-	*) echo "S=$SRCDIR" | sed 's,/$,,';;
+        "") echo "S=.";;
+        /*) echo "S=$SRCDIR" | sed 's,/$,,';;
+        *) echo "S=$SRCDIR" | sed 's,/$,,';;
     esac
     echo
 ) > defs.mk
@@ -611,8 +608,8 @@ echo 'Generating build-sys161/defs.mk'
     echo "BINDIR=$BINDIR"
     echo
     case "$SRCDIR" in
-	/*) echo "S=$SRCDIR" | sed 's,/$,,';;
-	*) echo "S=../$SRCDIR" | sed 's,/$,,';;
+        /*) echo "S=$SRCDIR" | sed 's,/$,,';;
+        *) echo "S=../$SRCDIR" | sed 's,/$,,';;
     esac
     echo "CPU=$CPU"
     echo
@@ -634,8 +631,8 @@ echo 'Generating build-trace161/defs.mk'
     echo "BINDIR=$BINDIR"
     echo
     case "$SRCDIR" in
-	/*) echo "S=$SRCDIR" | sed 's,/$,,';;
-	*) echo "S=../$SRCDIR" | sed 's,/$,,';;
+        /*) echo "S=$SRCDIR" | sed 's,/$,,';;
+        *) echo "S=../$SRCDIR" | sed 's,/$,,';;
     esac
     echo "CPU=$CPU"
     echo
@@ -657,8 +654,8 @@ echo 'Generating build-stat161/defs.mk'
     echo "BINDIR=$BINDIR"
     echo
     case "$SRCDIR" in
-	/*) echo "S=$SRCDIR" | sed 's,/$,,';;
-	*) echo "S=../$SRCDIR" | sed 's,/$,,';;
+        /*) echo "S=$SRCDIR" | sed 's,/$,,';;
+        *) echo "S=../$SRCDIR" | sed 's,/$,,';;
     esac
     echo
 ) > build-stat161/defs.mk
@@ -679,8 +676,8 @@ echo 'Generating build-hub161/defs.mk'
     echo "BINDIR=$BINDIR"
     echo
     case "$SRCDIR" in
-	/*) echo "S=$SRCDIR" | sed 's,/$,,';;
-	*) echo "S=../$SRCDIR" | sed 's,/$,,';;
+        /*) echo "S=$SRCDIR" | sed 's,/$,,';;
+        *) echo "S=../$SRCDIR" | sed 's,/$,,';;
     esac
     echo
 ) > build-hub161/defs.mk
@@ -696,8 +693,8 @@ echo 'Generating build-doc/defs.mk'
     echo "MANDIR=$MANDIR"
     echo
     case "$SRCDIR" in
-	/*) echo "S=$SRCDIR" | sed 's,/$,,';;
-	*) echo "S=../$SRCDIR" | sed 's,/$,,';;
+        /*) echo "S=$SRCDIR" | sed 's,/$,,';;
+        *) echo "S=../$SRCDIR" | sed 's,/$,,';;
     esac
     echo
 ) > build-doc/defs.mk
@@ -708,12 +705,12 @@ if [ -d ${SRCDIR}$CPU/tests ]; then
     echo 'Generating test-cpu/defs.mk'
 
     (
-	case "$SRCDIR" in
-	    /*) echo "S=$SRCDIR" | sed 's,/$,,';;
-	    *) echo "S=../$SRCDIR" | sed 's,/$,,';;
-	esac
-	echo "CPU=$CPU"
-	echo
+        case "$SRCDIR" in
+            /*) echo "S=$SRCDIR" | sed 's,/$,,';;
+            *) echo "S=../$SRCDIR" | sed 's,/$,,';;
+        esac
+        echo "CPU=$CPU"
+        echo
     ) > test-cpu/defs.mk
 fi
 
@@ -754,10 +751,10 @@ cp -f build-sys161/Makefile build-trace161/Makefile
 
 if [ -d ${SRCDIR}$CPU/tests ]; then
     (
-	echo '# Automatically generated file - do not edit here'
-	echo 'include defs.mk'
-	echo 'include $S/version.mk'
-	echo 'include $S/$(CPU)/tests/test.mk'
+        echo '# Automatically generated file - do not edit here'
+        echo 'include defs.mk'
+        echo 'include $S/version.mk'
+        echo 'include $S/$(CPU)/tests/test.mk'
     ) > test-cpu/Makefile
 fi
 
@@ -808,7 +805,7 @@ echo 'Generating make rules'
 
 if [ -d test-cpu ]; then
     (
-	cd test-cpu && touch depend.mk rules.mk && make rules
+        cd test-cpu && touch depend.mk rules.mk && make rules
     )
 fi
 
